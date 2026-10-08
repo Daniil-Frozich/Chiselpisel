@@ -1,0 +1,68 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+// Функция интерполяции по формуле Ньютона для неравноотстоящих узлов
+// x[], y[] - исходные данные, n - количество узлов, t - точка, в которой ищем значение
+double newton_interp(const double x[], const double y[], int n, double t) {
+    // Таблица разделенных разностей (максимальный размер 100)
+    double diff[100][100];
+
+    // Шаг 1: Заполняем первый столбец значениями y
+    for (int i = 0; i < n; i++) {
+        diff[i][0] = y[i];
+    }
+
+    // Шаг 2: Вычисляем разделенные разности
+    // diff[i][j] = (diff[i+1][j-1] - diff[i][j-1]) / (x[i+j] - x[i])
+    for (int j = 1; j < n; j++) {
+        for (int i = 0; i < n - j; i++) {
+            diff[i][j] = (diff[i + 1][j - 1] - diff[i][j - 1]) / (x[i + j] - x[i]);
+        }
+    }
+
+    // Шаг 3: Вычисляем значение полинома по схеме Горнера
+    double result = diff[0][0];
+    double product = 1.0;
+
+    for (int i = 0; i < n - 1; i++) {
+        product *= (t - x[i]);
+        result += diff[0][i + 1] * product;
+    }
+
+    return result;
+}
+
+int main() {
+    // --- 1. Данные из таблицы ---
+    double x[] = {1, 4, 6, 7, 12};
+    double y[] = {-3, -5, 7, 14, 15};
+    int n = sizeof(x) / sizeof(x[0]);
+
+    cout << "=== Интерполяция табличных данных ===" << endl;
+    double test_points[] = {2, 3, 5, 8, 10};
+    for (double t : test_points) {
+        cout << "P(" << t << ") = " << newton_interp(x, y, n, t) << endl;
+    }
+
+    // --- 2. Проверка для функции y = x^4 + 2x ---
+    cout << "\n=== Интерполяция функции y = x^4 + 2x ===" << endl;
+    double y_func[5];
+    cout << "Таблица значений функции:" << endl;
+    for (int i = 0; i < n; i++) {
+        y_func[i] = pow(x[i], 4) + 2 * x[i];
+        cout << "x = " << x[i] << ", y = " << y_func[i] << endl;
+    }
+
+    cout << "\nСравнение точного и интерполированного значений:" << endl;
+    for (double t : test_points) {
+        double exact = pow(t, 4) + 2 * t;
+        double interpolated = newton_interp(x, y_func, n, t);
+        cout << "t = " << t 
+             << " | Точное: " << exact 
+             << " | Интерполяция: " << interpolated 
+             << " | Погрешность: " << fabs(exact - interpolated) << endl;
+    }
+
+    return 0;
+}
